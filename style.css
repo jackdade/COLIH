@@ -1,5 +1,5 @@
 /* ============================================================
-   style.css — Sistema COLIH Médicos Parceiros JW
+   style.css — Sistema COLI Médicos Parceiros JW
    Organização:
      1. Variáveis e Reset
      2. Tipografia
@@ -67,7 +67,7 @@ h1, h2, h3, h4, h5 {
    3. NAVBAR
    Barra de navegação fixa no topo
 ──────────────────────────────────────────── */
-.navbar-colih {
+.navbar-coli {
   background: var(--navy);
   padding: 0.75rem 2rem;
   position: sticky;
@@ -725,7 +725,7 @@ h1, h2, h3, h4, h5 {
   .btn-login-nav i { font-size: 1rem; }
 
   /* Reduz padding lateral da navbar para não apertar */
-  .navbar-colih { padding: 0.75rem 1rem; }
+  .navbar-coli { padding: 0.75rem 1rem; }
 }
 
 /* Em telas maiores, o label aparece com espaço à esquerda do ícone */
@@ -733,9 +733,144 @@ h1, h2, h3, h4, h5 {
   .btn-nav-label { margin-left: 0.3rem; }
 }
 
+/* ── Autocomplete: remove seta nativa do datalist/combobox ──
+   Deixa o campo visual limpo, apenas com o texto digitado.
+   A seta nativa do <datalist> varia por navegador — remove em todos.
+──────────────────────────────────────────── */
+input[list] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: none !important;
+  padding-right: 0.9rem;
+}
+input[list]::-webkit-calendar-picker-indicator {
+  display: none !important;
+  opacity: 0;
+}
+input[list]:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(14, 140, 122, 0.12);
+}
+
+/* ── Flash de confirmação de busca ──
+   Pequena barra colorida que aparece e some automaticamente
+──────────────────────────────────────────── */
+@keyframes flashEntrada {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes flashSaida {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ── Botão "Gerenciar" ao lado do label do campo ── */
+.btn-gerenciar {
+  background: none;
+  border: none;
+  color: var(--teal);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.btn-gerenciar:hover { color: var(--teal-light); }
+.btn-gerenciar i { font-size: 0.9rem; }
+
+/* ── Lista do modal de gerenciamento com scroll suave ──
+   Rola verticalmente ao invés de paginar — mais eficiente
+──────────────────────────────────────────── */
+#listaItensGerenciar {
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--teal) #eef1f6;
+}
+#listaItensGerenciar::-webkit-scrollbar        { width: 5px; }
+#listaItensGerenciar::-webkit-scrollbar-track  { background: #eef1f6; border-radius: 10px; }
+#listaItensGerenciar::-webkit-scrollbar-thumb  { background: var(--teal); border-radius: 10px; }
+
+/* ── Item da lista no modal de gerenciamento ── */
+.lista-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  margin-bottom: 0.3rem;
+  background: var(--gray-soft);
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.lista-item:hover { background: #e4e9f2; }
+
+/* Item em uso — não pode ser excluído */
+.lista-item.em-uso {
+  background: rgba(14,140,122,0.07);
+  border-left: 3px solid var(--teal);
+}
+.lista-item .item-nome { font-weight: 500; color: var(--text-dark); }
+.lista-item .item-badge {
+  font-size: 0.68rem; color: var(--teal); background: rgba(14,140,122,0.1);
+  border-radius: 20px; padding: 0.1rem 0.5rem; margin-left: 0.5rem;
+}
+
+/* ── Autocomplete customizado (campos Área / Cidade / Região no formulário) ──
+   Componente próprio: input + dropdown flutuante + validação visual
+──────────────────────────────────────────── */
+.ac-wrapper {
+  position: relative;
+}
+
+/* Dropdown flutuante que aparece abaixo do input */
+.ac-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0; right: 0;
+  z-index: 1050;
+  background: #fff;
+  border: 1.5px solid var(--teal);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(14,140,122,0.13);
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--teal) #eef1f6;
+}
+.ac-dropdown::-webkit-scrollbar       { width: 4px; }
+.ac-dropdown::-webkit-scrollbar-track { background: #eef1f6; }
+.ac-dropdown::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 4px; }
+
+/* Cada opção do dropdown */
+.ac-item {
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-dark);
+  transition: background 0.1s;
+  border-bottom: 1px solid #f0f3f8;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover { background: rgba(14,140,122,0.08); color: var(--teal); }
+
+/* Estado de erro — valor digitado não existe na lista */
+.ac-invalido {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 3px rgba(220,53,69,0.12) !important;
+}
+.ac-invalido + div + .ac-hint { display: block; }
+
 /* Responsividade: esconde sidebar em mobile */
 @media (max-width: 768px) {
   .admin-sidebar  { display: none; }
   .hero           { padding: 3rem 1rem 3rem; }
   .search-card    { padding: 1.2rem; }
 }
+

@@ -1,5 +1,5 @@
 /* ============================================================
-   app.js — Sistema COLIH Médicos Parceiros JW
+   app.js — Sistema COLI Médicos Parceiros JW
    Organização:
      1.  Banco de dados (localStorage simulando PostgreSQL)
      2.  Dados de demonstração iniciais
@@ -29,17 +29,40 @@
 ──────────────────────────────────────────── */
 const DB = {
   get usuarios() {
-    return JSON.parse(localStorage.getItem('colih_usuarios') || '[]');
+    return JSON.parse(localStorage.getItem('coli_usuarios') || '[]');
   },
   set usuarios(v) {
-    localStorage.setItem('colih_usuarios', JSON.stringify(v));
+    localStorage.setItem('coli_usuarios', JSON.stringify(v));
   },
 
   get medicos() {
-    return JSON.parse(localStorage.getItem('colih_medicos') || '[]');
+    return JSON.parse(localStorage.getItem('coli_medicos') || '[]');
   },
   set medicos(v) {
-    localStorage.setItem('colih_medicos', JSON.stringify(v));
+    localStorage.setItem('coli_medicos', JSON.stringify(v));
+  },
+
+  // ── Listas controladas: área, cidade e região ──
+  // Garantem padronização nos cadastros de médicos.
+  get areas() {
+    return JSON.parse(localStorage.getItem('coli_areas') || '[]');
+  },
+  set areas(v) {
+    localStorage.setItem('coli_areas', JSON.stringify(v));
+  },
+
+  get cidades() {
+    return JSON.parse(localStorage.getItem('coli_cidades') || '[]');
+  },
+  set cidades(v) {
+    localStorage.setItem('coli_cidades', JSON.stringify(v));
+  },
+
+  get regioes() {
+    return JSON.parse(localStorage.getItem('coli_regioes') || '[]');
+  },
+  set regioes(v) {
+    localStorage.setItem('coli_regioes', JSON.stringify(v));
   },
 };
 
@@ -75,6 +98,21 @@ function initDemo() {
       { id: 11, nome: 'Dr. Renato Bittencourt',      area: 'Cardiologia',          subarea: 'Cardiologia Intervencionista', cidade: 'Lages - SC', regiao: 'Serrana',          telPessoal: '(49) 98700-1010', telComercial: '',               obs: '',                                                       criadoPor: 'admin'      },
       { id: 12, nome: 'Dra. Simone Pereira',         area: 'Endocrinologia',       subarea: 'Diabetes e Tireoide',     cidade: 'Chapecó - SC',    regiao: 'Oeste Catarinense', telPessoal: '(49) 98600-1111', telComercial: '(49) 3306-5500', obs: 'Parceira nova, muito atenciosa.',                        criadoPor: 'joao.lider' },
     ];
+  }
+
+  // ── Listas de cadastros controlados ──
+  // Geradas automaticamente a partir dos médicos demo (evita cadastro manual na demo)
+  if (DB.areas.length === 0) {
+    const areasUnicas = [...new Set(DB.medicos.map(m => m.area).filter(Boolean))].sort();
+    DB.areas = areasUnicas.map((nome, i) => ({ id: i + 1, nome }));
+  }
+  if (DB.cidades.length === 0) {
+    const cidadesUnicas = [...new Set(DB.medicos.map(m => m.cidade).filter(Boolean))].sort();
+    DB.cidades = cidadesUnicas.map((nome, i) => ({ id: i + 1, nome }));
+  }
+  if (DB.regioes.length === 0) {
+    const regioesUnicas = [...new Set(DB.medicos.map(m => m.regiao).filter(Boolean))].sort();
+    DB.regioes = regioesUnicas.map((nome, i) => ({ id: i + 1, nome }));
   }
 }
 
@@ -305,12 +343,16 @@ function showTab(tab) {
   const sideEl = document.getElementById('tab-' + tab);
   if (sideEl) sideEl.classList.add('active');
 
-  // Chama a função de renderização de cada aba ao abri-la
-  if (tab === 'dashboard')   renderDashboard();
-  if (tab === 'medicos')     renderTabelaMedicos();
-  if (tab === 'usuarios')    renderTabelaUsuarios();
-  if (tab === 'cadMedico')   limparFormMedico();
-  if (tab === 'cadUsuario')  limparFormUsuario();
+  // Chama a função de renderização de cada aba ao abri-la.
+  // cadMedico/cadUsuario SÓ limpam quando acessados pelo menu — nunca quando
+  // vêm de editarMedico/editarUsuario (flag _editando protege os dados já preenchidos).
+  if (tab === 'dashboard')  renderDashboard();
+  if (tab === 'medicos')    renderTabelaMedicos();
+  if (tab === 'usuarios')   renderTabelaUsuarios();
+  if (tab === 'cadMedico'  && !window._editandoMedico)  limparFormMedico();
+  if (tab === 'cadUsuario' && !window._editandoUsuario) limparFormUsuario();
+  window._editandoMedico  = false;
+  window._editandoUsuario = false;
 }
 
 
@@ -330,8 +372,8 @@ function renderDashboard() {
   document.getElementById('statUsuarios').textContent = usuarios.length;
   document.getElementById('statAreas').textContent    = areas.length;
 
-  // Exibe os 5 médicos cadastrados mais recentemente
-  const recentes = [...medicos].reverse().slice(0, 5);
+  // Exibe os 10 médicos cadastrados mais recentemente
+  const recentes = [...medicos].reverse().slice(0, 10);
   const el = document.getElementById('dashMedicos');
 
   if (!recentes.length) {
@@ -365,8 +407,9 @@ function renderDashboard() {
 function salvarMedico() {
   const id          = document.getElementById('medicoEditId').value;
   const nome        = document.getElementById('mNome').value.trim();
-  const area        = document.getElementById('mArea').value.trim();
-  const cidade      = document.getElementById('mCidade').value.trim();
+  // Lê dos campos hidden que guardam o valor validado do autocomplete
+  const area        = document.getElementById('mAreaVal').value;
+  const cidade      = document.getElementById('mCidadeVal').value;
   const telPessoal  = document.getElementById('mTelPessoal').value.trim();
 
   // Validação dos campos obrigatórios
@@ -393,7 +436,7 @@ function salvarMedico() {
         area,
         subarea:       document.getElementById('mSubarea').value.trim(),
         cidade,
-        regiao:        document.getElementById('mRegiao').value.trim(),
+        regiao:        document.getElementById('mRegiaoVal').value,
         telPessoal,
         telComercial:  document.getElementById('mTelComercial').value.trim(),
         obs:           document.getElementById('mObs').value.trim(),
@@ -408,16 +451,17 @@ function salvarMedico() {
       area,
       subarea:       document.getElementById('mSubarea').value.trim(),
       cidade,
-      regiao:        document.getElementById('mRegiao').value.trim(),
+      regiao:        document.getElementById('mRegiaoVal').value,
       telPessoal,
       telComercial:  document.getElementById('mTelComercial').value.trim(),
       obs:           document.getElementById('mObs').value.trim(),
-      criadoPor:     currentUser.username, // registra quem cadastrou
+      criadoPor:     currentUser.username,
     });
     toast('Médico cadastrado com sucesso!');
   }
 
   DB.medicos = medicos;
+  atualizarTodosSelects(); // Atualiza selects e datalists com novos dados
   showTab('medicos');
 }
 
@@ -432,18 +476,25 @@ function editarMedico(id) {
     return;
   }
 
+  // Garante que os selects tenham as opções antes de tentar selecionar um valor
+  atualizarTodosSelects();
+
   // Preenche os campos do formulário
   document.getElementById('medicoEditId').value    = m.id;
   document.getElementById('mNome').value           = m.nome;
-  document.getElementById('mArea').value           = m.area;
   document.getElementById('mSubarea').value        = m.subarea       || '';
-  document.getElementById('mCidade').value         = m.cidade;
-  document.getElementById('mRegiao').value         = m.regiao        || '';
   document.getElementById('mTelPessoal').value     = m.telPessoal;
   document.getElementById('mTelComercial').value   = m.telComercial  || '';
   document.getElementById('mObs').value            = m.obs           || '';
 
+  // Selects → agora são autocomplete customizados
+  acSetValor('mArea',   m.area   || '');
+  acSetValor('mCidade', m.cidade || '');
+  acSetValor('mRegiao', m.regiao || '');
+
   document.getElementById('titleCadMedico').textContent = 'Editar Médico';
+  // Seta flag para que showTab não apague os dados que acabamos de preencher
+  window._editandoMedico = true;
   showTab('cadMedico');
 }
 
@@ -471,9 +522,51 @@ function excluirMedico(id) {
 
 /** Limpa todos os campos do formulário de médico */
 function limparFormMedico() {
-  ['medicoEditId','mNome','mArea','mSubarea','mCidade','mRegiao','mTelPessoal','mTelComercial','mObs']
+  ['medicoEditId','mNome','mSubarea','mTelPessoal','mTelComercial','mObs']
     .forEach(id => document.getElementById(id).value = '');
+  // Reseta os autocompletes customizados
+  acSetValor('mArea',   '');
+  acSetValor('mCidade', '');
+  acSetValor('mRegiao', '');
   document.getElementById('titleCadMedico').textContent = 'Cadastrar Médico';
+  atualizarTodosSelects();
+}
+
+/* ────────────────────────────────────────────
+   AUTOCOMPLETE — Sugestões para Área, Cidade e Região
+   Evita duplicatas com nomes diferentes (ex: "Chapecó" vs "Chapecó - SC").
+   Sugere valores já cadastrados conforme o usuário digita.
+──────────────────────────────────────────── */
+
+/**
+ * Atualiza os <datalist> com os valores únicos já cadastrados no banco.
+ * Chamado ao abrir o formulário e após cada salvamento.
+ */
+function atualizarSugestoesAutocomplete() {
+  const medicos = DB.medicos;
+
+  // Coleta valores únicos de cada campo (ignora vazios, ordena alfabeticamente)
+  const areas   = [...new Set(medicos.map(m => m.area).filter(Boolean))].sort();
+  const subareas= [...new Set(medicos.map(m => m.subarea).filter(Boolean))].sort();
+  const cidades = [...new Set(medicos.map(m => m.cidade).filter(Boolean))].sort();
+  const regioes = [...new Set(medicos.map(m => m.regiao).filter(Boolean))].sort();
+
+  // Preenche cada datalist com as opções
+  preencherDatalist('dlArea',    areas);
+  preencherDatalist('dlSubarea', subareas);
+  preencherDatalist('dlCidade',  cidades);
+  preencherDatalist('dlRegiao',  regioes);
+}
+
+/**
+ * Preenche um elemento <datalist> com um array de opções
+ * @param {string} id      - ID do datalist
+ * @param {Array}  opcoes  - Lista de strings para sugerir
+ */
+function preencherDatalist(id, opcoes) {
+  const dl = document.getElementById(id);
+  if (!dl) return;
+  dl.innerHTML = opcoes.map(o => `<option value="${o}">`).join('');
 }
 
 /** Cancela edição e volta para a listagem */
@@ -581,6 +674,8 @@ function editarUsuario(id) {
   document.getElementById('uTipo').value         = u.tipo;
 
   document.getElementById('titleCadUsuario').textContent = 'Editar Usuário';
+  // Seta flag para que showTab não apague os dados que acabamos de preencher
+  window._editandoUsuario = true;
   showTab('cadUsuario');
 }
 
@@ -614,20 +709,26 @@ function limparFormUsuario() {
 
 function cancelarEdicaoUsuario() { limparFormUsuario(); showTab('usuarios'); }
 
-/** Renderiza a tabela de usuários no admin */
-function renderTabelaUsuarios() {
-  const usuarios = DB.usuarios;
-  const tb = document.getElementById('tabelaUsuarios');
+/** Renderiza a tabela de usuários no admin com paginação de 20 por página */
+let paginaUsuarios = 1;
+const USUARIOS_POR_PAG = 20;
 
-  // Mapas para exibição visual
+function renderTabelaUsuarios(pagina) {
+  if (pagina !== undefined) paginaUsuarios = pagina;
+  const todos    = DB.usuarios;
+  const total    = todos.length;
+  const totalPgs = Math.ceil(total / USUARIOS_POR_PAG);
+  const inicio   = (paginaUsuarios - 1) * USUARIOS_POR_PAG;
+  const slice    = todos.slice(inicio, inicio + USUARIOS_POR_PAG);
+
+  const tb = document.getElementById('tabelaUsuarios');
   const badgeMap = { supremo: 'badge-supremo', lider: 'badge-lider', sublider: 'badge-sublider', usuario: 'badge-usuario' };
   const labelMap = { supremo: 'Supremo', lider: 'Líder', sublider: 'Sub-líder', usuario: 'Usuário' };
 
-  tb.innerHTML = usuarios.map(u => {
+  tb.innerHTML = slice.map(u => {
     const isSelf   = u.username === currentUser.username;
     const podaDel  = podeDelUsuario(u);
     const podeEdit = NIVEL[currentUser.tipo] > NIVEL[u.tipo] || isSelf || currentUser.tipo === 'supremo';
-
     return `<tr>
       <td>
         <code>${u.username}</code>
@@ -642,6 +743,27 @@ function renderTabelaUsuarios() {
       </td>
     </tr>`;
   }).join('');
+
+  // Paginador de usuários
+  const pg = document.getElementById('paginadorUsuarios');
+  if (!pg) return;
+  if (totalPgs <= 1) { pg.innerHTML = ''; return; }
+
+  let btns = '';
+  for (let p = 1; p <= totalPgs; p++) {
+    btns += `<button class="page-btn ${p === paginaUsuarios ? 'active' : ''}" onclick="renderTabelaUsuarios(${p})">${p}</button>`;
+  }
+  pg.innerHTML = `
+    <div class="pagination-wrapper mt-3">
+      <button class="page-btn" onclick="renderTabelaUsuarios(${paginaUsuarios-1})" ${paginaUsuarios===1?'disabled':''}>
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      ${btns}
+      <button class="page-btn" onclick="renderTabelaUsuarios(${paginaUsuarios+1})" ${paginaUsuarios===totalPgs?'disabled':''}>
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+    <p class="pagination-info">Mostrando ${inicio+1}–${Math.min(inicio+USUARIOS_POR_PAG,total)} de ${total} usuários</p>`;
 }
 
 
@@ -660,19 +782,16 @@ let resultadosAtuais = [];  // Guarda os resultados filtrados para paginar
 
 /**
  * Executa a busca com os filtros preenchidos.
- * Chamado pelo botão "Buscar" e também ao pressionar Enter.
+ * Mostra um flash animado de confirmação ao buscar.
  */
 function buscarMedicos() {
-  const nome   = (document.getElementById('searchNome')?.value   || '').toLowerCase().trim();
-  const area   = (document.getElementById('searchArea')?.value   || '').toLowerCase();
-  const cidade = (document.getElementById('searchCidade')?.value || '').toLowerCase().trim();
+  const nome   = (document.getElementById('searchNome')?.value      || '').toLowerCase().trim();
+  const area   = (document.getElementById('searchAreaTexto')?.value || '').toLowerCase().trim();
+  const cidade = (document.getElementById('searchCidade')?.value    || '').toLowerCase().trim();
 
-  // Verifica se há algum filtro ativo
   const buscaAtiva = nome || area || cidade;
 
   let resultados = DB.medicos;
-
-  // Aplica os filtros
   if (nome)   resultados = resultados.filter(m => m.nome.toLowerCase().includes(nome));
   if (area)   resultados = resultados.filter(m => m.area.toLowerCase().includes(area));
   if (cidade) resultados = resultados.filter(m =>
@@ -681,14 +800,52 @@ function buscarMedicos() {
   );
 
   if (buscaAtiva) {
-    // Busca ativa: mostra paginado
     resultadosAtuais = resultados;
     paginaAtual = 1;
     renderPaginado();
+    // Flash de confirmação: barra colorida aparece acima dos resultados por 3s
+    mostrarFlashBusca(resultados.length);
   } else {
-    // Sem busca: mostra destaques
     mostrarDestaques();
   }
+}
+
+/**
+ * Mostra uma barra flash temporária confirmando que a busca foi realizada.
+ * Some sozinha após 3,5 segundos com animação de fade.
+ * @param {number} total - Quantidade de resultados encontrados
+ */
+function mostrarFlashBusca(total) {
+  // Remove flash anterior se ainda estiver visível
+  const anterior = document.getElementById('flashBusca');
+  if (anterior) anterior.remove();
+
+  const flash = document.createElement('div');
+  flash.id = 'flashBusca';
+
+  const icone  = total > 0 ? 'bi-check-circle-fill' : 'bi-info-circle-fill';
+  const cor    = total > 0 ? 'var(--teal)' : 'var(--gold)';
+  const msg    = total > 0
+    ? `<strong>${total}</strong> médico${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}`
+    : 'Nenhum médico encontrado para essa busca';
+
+  flash.innerHTML = `<i class="bi ${icone} me-2"></i>${msg}`;
+  flash.style.cssText = `
+    background: ${cor}; color: white;
+    padding: 0.7rem 1.4rem; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 500;
+    display: inline-flex; align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    margin-bottom: 1rem;
+    animation: flashEntrada 0.3s ease, flashSaida 0.5s ease 3s forwards;
+  `;
+
+  // Insere antes dos resultados
+  const wrapper = document.getElementById('resultadosBusca');
+  wrapper.parentNode.insertBefore(flash, wrapper);
+
+  // Remove do DOM após a animação de saída
+  setTimeout(() => flash.remove(), 3600);
 }
 
 /**
@@ -858,23 +1015,394 @@ function irParaPagina(p) {
   document.getElementById('resultadosBusca').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/** Popula o select de áreas com as opções do banco */
-function populateAreaSelect() {
-  const sel = document.getElementById('searchArea');
-  if (!sel) return;
-  const areas   = [...new Set(DB.medicos.map(m => m.area).filter(Boolean))].sort();
-  const current = sel.value;
-  sel.innerHTML =
-    '<option value="">Todas as áreas</option>' +
-    areas.map(a => `<option value="${a.toLowerCase()}" ${current === a.toLowerCase() ? 'selected' : ''}>${a}</option>`).join('');
+/**
+ * Atualiza TODOS os selects e datalists do sistema.
+ * Os datalists da busca pública são filtrados dinamicamente via debounce
+ * (só sugere ao digitar 2+ caracteres — performance com grandes volumes).
+ */
+function atualizarTodosSelects() {
+  const medicos = DB.medicos;
+
+  // ── Datalist de subárea (texto livre) ──
+  const subareas = [...new Set(medicos.map(m => m.subarea).filter(Boolean))].sort();
+  preencherDatalist('dlSubarea', subareas);
+
+  // ── Dados para os autocompletes da busca pública ──
+  window._autocompleteNomes   = medicos.map(m => m.nome).sort();
+  window._autocompleteAreas   = DB.areas.map(a => a.nome).sort();
+  window._autocompleteCidades = [
+    ...DB.cidades.map(c => c.nome),
+    ...DB.regioes.map(r => r.nome),
+  ].sort().filter((v, i, arr) => arr.indexOf(v) === i);
 }
 
-// Permite buscar pressionando Enter nos campos de busca
-document.addEventListener('DOMContentLoaded', () => {
-  ['searchNome', 'searchCidade'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') buscarMedicos(); });
+/**
+ * Preenche um <datalist> com sugestões de texto.
+ */
+function preencherDatalist(id, opcoes) {
+  const dl = document.getElementById(id);
+  if (!dl) return;
+  dl.innerHTML = opcoes.map(o => `<option value="${o}">`).join('');
+}
+
+/**
+ * Filtra e atualiza um datalist de autocomplete público.
+ * Só ativa com 2+ caracteres para performance com muitos dados.
+ */
+function filtrarAutocomplete(valor, fonte, datalistId) {
+  const dl = document.getElementById(datalistId);
+  if (!dl) return;
+  const termo = valor.toLowerCase().trim();
+  if (termo.length < 2) { dl.innerHTML = ''; return; }
+  const filtrados = (fonte || [])
+    .filter(v => v.toLowerCase().includes(termo))
+    .slice(0, 30);
+  dl.innerHTML = filtrados.map(v => `<option value="${v}">`).join('');
+}
+
+// Compatibilidade com chamadas antigas
+function atualizarSugestoesAutocomplete() { atualizarTodosSelects(); }
+function populateAreaSelect() { atualizarTodosSelects(); }
+
+/* ────────────────────────────────────────────
+   AUTOCOMPLETE CUSTOMIZADO (formulário de médico)
+   Campos: Área, Cidade, Região.
+   - Dropdown aparece ao digitar 2+ letras OU ao focar no campo
+   - Só aceita valores existentes na lista (valida ao sair do campo)
+   - Campo hidden guarda o valor confirmado para o salvarMedico()
+──────────────────────────────────────────── */
+
+// Mapa: id do campo → chave da lista no DB
+const AC_FONTE = { mArea: 'areas', mCidade: 'cidades', mRegiao: 'regioes' };
+
+/**
+ * Filtra e exibe o dropdown do autocomplete customizado.
+ * @param {string} campoId - ID do input (ex: 'mArea')
+ * @param {string} tipo    - 'area' | 'cidade' | 'regiao'
+ */
+function acFiltrar(campoId, tipo) {
+  const input   = document.getElementById(campoId);
+  const drop    = document.getElementById('acDrop_' + campoId);
+  if (!input || !drop) return;
+
+  const termo   = input.value.toLowerCase().trim();
+  const fonte   = DB[AC_FONTE[campoId]] || [];
+
+  // Filtra: sem termo mostra os primeiros 30; com termo filtra por conteúdo
+  const filtrados = termo.length < 2
+    ? fonte.slice().sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR')).slice(0, 30)
+    : fonte.filter(i => i.nome.toLowerCase().includes(termo))
+           .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'))
+           .slice(0, 30);
+
+  if (!filtrados.length) { drop.innerHTML = ''; drop.style.display = 'none'; return; }
+
+  drop.innerHTML = filtrados.map(i => `
+    <div class="ac-item" onmousedown="acSelecionar('${campoId}', ${JSON.stringify(i.nome)})">
+      ${i.nome}
+    </div>`).join('');
+  drop.style.display = 'block';
+}
+
+/**
+ * Confirma a seleção de um item do dropdown.
+ * Preenche o input visível e o campo hidden com o valor.
+ */
+function acSelecionar(campoId, valor) {
+  document.getElementById(campoId).value        = valor;
+  document.getElementById(campoId + 'Val').value = valor;
+  document.getElementById('acDrop_' + campoId).style.display = 'none';
+  // Remove borda de erro se havia
+  document.getElementById(campoId).classList.remove('ac-invalido');
+}
+
+/**
+ * Valida ao sair do campo (onblur).
+ * Se o texto digitado não bater exatamente com um item da lista,
+ * apaga o hidden (valor inválido) e marca o campo visualmente.
+ */
+function acValidar(campoId, tipo) {
+  // Pequeno delay para o onmousedown do item ser processado antes do blur
+  setTimeout(() => {
+    const input  = document.getElementById(campoId);
+    const hidden = document.getElementById(campoId + 'Val');
+    const drop   = document.getElementById('acDrop_' + campoId);
+    if (!input) return;
+
+    const texto  = input.value.trim();
+    const fonte  = DB[AC_FONTE[campoId]] || [];
+    const existe = fonte.some(i => i.nome.toLowerCase() === texto.toLowerCase());
+
+    if (!texto) {
+      // Campo vazio — ok para região (opcional), erro para área/cidade
+      hidden.value = '';
+      input.classList.remove('ac-invalido');
+    } else if (existe) {
+      // Encontrado: normaliza para o valor exato da lista
+      const item   = fonte.find(i => i.nome.toLowerCase() === texto.toLowerCase());
+      input.value  = item.nome;
+      hidden.value = item.nome;
+      input.classList.remove('ac-invalido');
+    } else {
+      // Não existe na lista — invalida
+      hidden.value = '';
+      input.classList.add('ac-invalido');
+    }
+
+    if (drop) drop.style.display = 'none';
+  }, 150);
+}
+
+/**
+ * Seta programaticamente um valor nos campos de autocomplete
+ * (usado por editarMedico e limparFormMedico)
+ */
+function acSetValor(campoId, valor) {
+  const input  = document.getElementById(campoId);
+  const hidden = document.getElementById(campoId + 'Val');
+  if (!input || !hidden) return;
+  input.value  = valor || '';
+  hidden.value = valor || '';
+  input.classList.remove('ac-invalido');
+}
+
+// Fecha todos os dropdowns ao clicar fora
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ac-wrapper')) {
+    document.querySelectorAll('.ac-dropdown').forEach(d => d.style.display = 'none');
+  }
+});
+
+
+/* ────────────────────────────────────────────
+   GERENCIAMENTO DE LISTAS (Área / Cidade / Região)
+   Modal único reutilizável para os 3 tipos.
+──────────────────────────────────────────── */
+
+// Tipo de lista aberta no momento no modal ('area' | 'cidade' | 'regiao')
+let tipoListaAtiva = null;
+
+// Configuração de cada tipo de lista
+const CONFIG_LISTA = {
+  area:   { titulo: 'Gerenciar Áreas de Atuação',    icone: 'bi-hospital',    getDB: () => DB.areas,   setDB: v => DB.areas = v,   campo: 'area'   },
+  cidade: { titulo: 'Gerenciar Cidades de Atendimento', icone: 'bi-geo-alt', getDB: () => DB.cidades, setDB: v => DB.cidades = v, campo: 'cidade' },
+  regiao: { titulo: 'Gerenciar Regiões de Atendimento', icone: 'bi-map',     getDB: () => DB.regioes, setDB: v => DB.regioes = v, campo: 'regiao' },
+};
+
+/**
+ * Abre o modal de gerenciamento para o tipo especificado
+ * @param {string} tipo - 'area' | 'cidade' | 'regiao'
+ */
+function abrirModalGerenciar(tipo) {
+  tipoListaAtiva = tipo;
+  const cfg = CONFIG_LISTA[tipo];
+
+  // Atualiza título do modal
+  document.getElementById('modalGerenciarTitulo').innerHTML =
+    `<i class="bi ${cfg.icone} me-2"></i>${cfg.titulo}`;
+
+  // Limpa o campo de input e a busca interna
+  document.getElementById('inputNovoItem').value  = '';
+  document.getElementById('inputBuscaLista').value = '';
+  paginaGerenciar = 1;
+
+  // Renderiza a lista
+  renderListaGerenciar();
+
+  // Abre o modal Bootstrap
+  new bootstrap.Modal(document.getElementById('modalGerenciar')).show();
+}
+
+// Página atual do modal de gerenciamento
+let paginaGerenciar = 1;
+const ITENS_GERENCIAR = 10;
+
+/**
+ * Renderiza a lista paginada no modal de gerenciamento.
+ * Respeita o filtro de busca interna.
+ * @param {number} pagina - Número da página (padrão: atual)
+ */
+function renderListaGerenciar(pagina) {
+  if (pagina !== undefined) paginaGerenciar = pagina;
+
+  const cfg     = CONFIG_LISTA[tipoListaAtiva];
+  const todos   = cfg.getDB().slice().sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+  const medicos = DB.medicos;
+  const el      = document.getElementById('listaItensGerenciar');
+  const pg      = document.getElementById('paginadorGerenciar');
+
+  // Aplica filtro de busca interna se houver texto
+  const termoBusca = (document.getElementById('inputBuscaLista')?.value || '').toLowerCase().trim();
+  const itens = termoBusca
+    ? todos.filter(i => i.nome.toLowerCase().includes(termoBusca))
+    : todos;
+
+  if (!itens.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:1.5rem;text-align:center">
+      <i class="bi bi-inbox" style="font-size:2rem;opacity:0.25;display:block;margin-bottom:0.5rem"></i>
+      <small>${termoBusca ? 'Nenhum resultado para "' + termoBusca + '"' : 'Nenhum item cadastrado ainda. Adicione um acima.'}</small>
+    </div>`;
+    pg.innerHTML = '';
+    return;
+  }
+
+  // Paginação
+  const total    = itens.length;
+  const totalPgs = Math.ceil(total / ITENS_GERENCIAR);
+  // Garante que a página atual não excede o total
+  if (paginaGerenciar > totalPgs) paginaGerenciar = totalPgs;
+  const inicio   = (paginaGerenciar - 1) * ITENS_GERENCIAR;
+  const slice    = itens.slice(inicio, inicio + ITENS_GERENCIAR);
+
+  const emUso = new Set(medicos.map(m => m[cfg.campo]).filter(Boolean));
+
+  el.innerHTML = slice.map(item => {
+    const usado = emUso.has(item.nome);
+    return `
+      <div class="lista-item ${usado ? 'em-uso' : ''}">
+        <span>
+          <span class="item-nome">${item.nome}</span>
+          ${usado ? `<span class="item-badge"><i class="bi bi-person-heart me-1"></i>em uso</span>` : ''}
+        </span>
+        ${usado
+          ? `<span title="Em uso — não pode excluir" style="color:var(--text-light);font-size:0.8rem"><i class="bi bi-lock-fill"></i></span>`
+          : `<button class="btn-danger-soft" onclick="excluirItemLista(${item.id})" title="Excluir"><i class="bi bi-trash"></i></button>`
+        }
+      </div>`;
+  }).join('');
+
+  // Paginador compacto
+  if (totalPgs <= 1) { pg.innerHTML = `<p class="pagination-info">${total} item${total!==1?'s':''}</p>`; return; }
+
+  // Gera botões de páginas (mostra no máx 5 ao redor da atual)
+  let btns = '';
+  const vizinhos = 2;
+  for (let p = 1; p <= totalPgs; p++) {
+    if (p === 1 || p === totalPgs || Math.abs(p - paginaGerenciar) <= vizinhos) {
+      btns += `<button class="page-btn ${p===paginaGerenciar?'active':''}" onclick="renderListaGerenciar(${p})">${p}</button>`;
+    } else if (Math.abs(p - paginaGerenciar) === vizinhos + 1) {
+      btns += `<button class="page-btn" disabled>…</button>`;
+    }
+  }
+
+  pg.innerHTML = `
+    <div class="pagination-wrapper">
+      <button class="page-btn" onclick="renderListaGerenciar(${paginaGerenciar-1})" ${paginaGerenciar===1?'disabled':''}>
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      ${btns}
+      <button class="page-btn" onclick="renderListaGerenciar(${paginaGerenciar+1})" ${paginaGerenciar===totalPgs?'disabled':''}>
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+    <p class="pagination-info">
+      ${inicio+1}–${Math.min(inicio+ITENS_GERENCIAR,total)} de ${total} itens
+    </p>`;
+}
+
+/** Reseta para pág 1 ao digitar na busca interna do modal */
+function filtrarListaGerenciar() {
+  paginaGerenciar = 1;
+  renderListaGerenciar();
+}
+
+/** Adiciona um novo item à lista ativa */
+function adicionarItemLista() {
+  const input = document.getElementById('inputNovoItem');
+  const nome  = input.value.trim();
+
+  if (!nome) { toast('Digite um nome para adicionar.', 'warn'); return; }
+
+  const cfg   = CONFIG_LISTA[tipoListaAtiva];
+  const lista = cfg.getDB();
+
+  // Verifica duplicata (case-insensitive)
+  const existe = lista.some(i => i.nome.toLowerCase() === nome.toLowerCase());
+  if (existe) { toast(`"${nome}" já está cadastrado.`, 'warn'); return; }
+
+  // Adiciona com novo ID
+  const novoId = lista.length ? Math.max(...lista.map(i => i.id)) + 1 : 1;
+  lista.push({ id: novoId, nome });
+  cfg.setDB(lista);
+
+  input.value = '';
+  renderListaGerenciar();
+  atualizarTodosSelects(); // Atualiza os selects do formulário imediatamente
+  toast(`"${nome}" adicionado!`);
+}
+
+/** Exclui um item da lista (apenas se não estiver em uso) */
+function excluirItemLista(id) {
+  const cfg    = CONFIG_LISTA[tipoListaAtiva];
+  const lista  = cfg.getDB();
+  const item   = lista.find(i => i.id === id);
+  if (!item) return;
+
+  // Dupla checagem de segurança: não excluir se em uso
+  const emUso = DB.medicos.some(m => m[cfg.campo] === item.nome);
+  if (emUso) { toast('Este item está em uso por um médico.', 'error'); return; }
+
+  showConfirm(
+    'Excluir item?',
+    `Deseja excluir "${item.nome}" da lista?`,
+    () => {
+      cfg.setDB(lista.filter(i => i.id !== id));
+      renderListaGerenciar();
+      atualizarTodosSelects();
+      toast(`"${item.nome}" excluído.`, 'warn');
+    }
+  );
+}
+
+/* ────────────────────────────────────────────
+   MÁSCARA DE TELEFONE
+   Formata automaticamente enquanto o usuário digita:
+   (XX) XXXXX-XXXX  ou  (XX) XXXX-XXXX
+──────────────────────────────────────────── */
+function aplicarMascaraTelefone(input) {
+  input.addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 11); // só dígitos, máx 11
+    if (v.length === 0) { this.value = ''; return; }
+    // Formata progressivamente
+    if (v.length <= 2)  { this.value = `(${v}`; return; }
+    if (v.length <= 6)  { this.value = `(${v.slice(0,2)}) ${v.slice(2)}`; return; }
+    if (v.length <= 10) { this.value = `(${v.slice(0,2)}) ${v.slice(2,6)}-${v.slice(6)}`; return; }
+    // 11 dígitos = celular (9 na frente)
+    this.value = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
   });
+}
+
+// Inicializa events após DOM pronto
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Busca pública: Enter nos 3 campos dispara busca ──
+  ['searchNome', 'searchCidade', 'searchAreaTexto'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') buscarMedicos(); });
+  });
+
+  // ── Autocomplete com debounce de 300ms e mínimo 2 caracteres ──
+  // Garante performance mesmo com milhares de registros
+  let debounceTimer = null;
+
+  const bindAutocomplete = (inputId, fonteKey, datalistId) => {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        filtrarAutocomplete(el.value, window[fonteKey] || [], datalistId);
+      }, 300);
+    });
+  };
+
+  bindAutocomplete('searchNome',      '_autocompleteNomes',   'dlSearchNome');
+  bindAutocomplete('searchAreaTexto', '_autocompleteAreas',   'dlSearchArea');
+  bindAutocomplete('searchCidade',    '_autocompleteCidades', 'dlSearchCidade');
+
+  // ── Máscara de telefone nos campos do formulário de médico ──
+  document.querySelectorAll('.telefone-mask').forEach(aplicarMascaraTelefone);
 });
 
 
@@ -887,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Schema SQL completo para implantação em PostgreSQL
 const SQL_SCHEMA = `-- ======================================
--- SCHEMA PostgreSQL — Sistema COLIH
+-- SCHEMA PostgreSQL — Sistema COLI
 -- Versão: 1.0
 -- ======================================
 
@@ -984,7 +1512,7 @@ function atualizarBotaoSQL() {
    13. INICIALIZAÇÃO
    Executado quando a página carrega
 ──────────────────────────────────────────── */
-initDemo();           // Carrega dados de demo se banco vazio
-populateAreaSelect(); // Preenche o select de áreas
-mostrarDestaques();   // Exibe 3–6 médicos em destaque na página inicial
+initDemo();               // Carrega dados de demo se banco vazio
+atualizarTodosSelects();  // Preenche selects do admin e datalists da busca pública
+mostrarDestaques();       // Exibe 3–6 médicos em destaque na página inicial
 // O botão SQL NÃO é criado aqui — aparece apenas após login (atualizarBotaoSQL)

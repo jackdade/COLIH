@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>COLIH — Médicos Parceiros</title>
+  <title>COLI — Médicos Parceiros</title>
 
   <!-- ── Dependências externas (CDN) ── -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
@@ -20,10 +20,10 @@
      NAVBAR — Barra de navegação fixa no topo
      Contém: logo, botões de login/logout/admin
 ════════════════════════════════════════════ -->
-<nav class="navbar-colih d-flex align-items-center justify-content-between">
+<nav class="navbar-coli d-flex align-items-center justify-content-between">
   <div>
     <!-- Logo e tagline -->
-    <div class="navbar-brand-text">COLIH <span>Médicos</span></div>
+    <div class="navbar-brand-text">COLI <span>Médicos</span></div>
     <div class="navbar-tagline">Rede de Parceiros JW</div>
   </div>
 
@@ -76,7 +76,7 @@
       </div>
 
       <h1 class="hero-title">
-        Encontre Médicos<br><span>Parceiros COLIH</span>
+        Encontre Médicos<br><span>Parceiros COLI</span>
       </h1>
 
       <p class="hero-subtitle">
@@ -99,21 +99,23 @@
           <div class="col-md-4">
             <label class="form-label">Nome do médico</label>
             <input type="text" class="form-control" id="searchNome"
+                   list="dlSearchNome" autocomplete="off"
                    placeholder="Ex: Dr. João Silva...">
           </div>
 
-          <!-- Filtro por área de atuação (populado dinamicamente via JS) -->
+          <!-- Filtro por área de atuação -->
           <div class="col-md-3">
             <label class="form-label">Área de atuação</label>
-            <select class="form-select" id="searchArea">
-              <option value="">Todas as áreas</option>
-            </select>
+            <input type="text" class="form-control" id="searchAreaTexto"
+                   list="dlSearchArea" autocomplete="off"
+                   placeholder="Ex: Cardiologia...">
           </div>
 
           <!-- Filtro por cidade ou região -->
           <div class="col-md-3">
             <label class="form-label">Cidade / Região</label>
             <input type="text" class="form-control" id="searchCidade"
+                   list="dlSearchCidade" autocomplete="off"
                    placeholder="Ex: Chapecó...">
           </div>
 
@@ -143,7 +145,7 @@
   <!-- ── Rodapé da área pública ── -->
   <div class="footer-pub mt-5">
     <i class="bi bi-heart-fill text-danger me-1"></i>
-    Sistema COLIH — Médicos Parceiros &nbsp;|&nbsp; Desenvolvido para a comunidade JW
+    Sistema COLI — Médicos Parceiros &nbsp;|&nbsp; Desenvolvido para a comunidade JW
   </div>
 
 </div><!-- /publicArea -->
@@ -192,7 +194,7 @@
 
     <!-- ── ABA: Dashboard ── -->
     <div id="tabDashboard">
-      <h4 class="mb-4">Bem-vindo ao Painel COLIH</h4>
+      <h4 class="mb-4">Bem-vindo ao Painel COLI</h4>
 
       <!-- Boxes de estatísticas -->
       <div class="row g-3 mb-4">
@@ -268,35 +270,87 @@
             <label class="form-label">Nome completo *</label>
             <input type="text" class="form-control" id="mNome" placeholder="Dr. Nome Sobrenome">
           </div>
+
+          <!-- Área: autocomplete com validação (só aceita valores cadastrados) -->
           <div class="col-md-6">
-            <label class="form-label">Área de atuação *</label>
-            <input type="text" class="form-control" id="mArea" placeholder="Ex: Cardiologia">
+            <label class="form-label d-flex align-items-center justify-content-between">
+              <span>Área de atuação *</span>
+              <button type="button" class="btn-gerenciar" onclick="abrirModalGerenciar('area')" title="Gerenciar áreas">
+                <i class="bi bi-plus-circle-fill"></i> Gerenciar
+              </button>
+            </label>
+            <div class="ac-wrapper" id="acWrap_mArea">
+              <input type="text" class="form-control ac-input" id="mArea"
+                     autocomplete="off" placeholder="Digite para filtrar..."
+                     oninput="acFiltrar('mArea','area')"
+                     onblur="acValidar('mArea','area')"
+                     onfocus="acFiltrar('mArea','area')">
+              <div class="ac-dropdown" id="acDrop_mArea"></div>
+            </div>
+            <input type="hidden" id="mAreaVal">
           </div>
+
+          <!-- Subárea: texto livre com autocomplete -->
           <div class="col-md-6">
             <label class="form-label">Subárea</label>
-            <input type="text" class="form-control" id="mSubarea" placeholder="Ex: Eletrofisiologia">
+            <input type="text" class="form-control" id="mSubarea"
+                   list="dlSubarea" autocomplete="off"
+                   placeholder="Ex: Eletrofisiologia">
+            <datalist id="dlSubarea"></datalist>
           </div>
+
+          <!-- Cidade: autocomplete com validação -->
           <div class="col-md-6">
-            <label class="form-label">Cidade de atendimento *</label>
-            <input type="text" class="form-control" id="mCidade" placeholder="Ex: Chapecó - SC">
+            <label class="form-label d-flex align-items-center justify-content-between">
+              <span>Cidade de atendimento *</span>
+              <button type="button" class="btn-gerenciar" onclick="abrirModalGerenciar('cidade')" title="Gerenciar cidades">
+                <i class="bi bi-plus-circle-fill"></i> Gerenciar
+              </button>
+            </label>
+            <div class="ac-wrapper" id="acWrap_mCidade">
+              <input type="text" class="form-control ac-input" id="mCidade"
+                     autocomplete="off" placeholder="Digite para filtrar..."
+                     oninput="acFiltrar('mCidade','cidade')"
+                     onblur="acValidar('mCidade','cidade')"
+                     onfocus="acFiltrar('mCidade','cidade')">
+              <div class="ac-dropdown" id="acDrop_mCidade"></div>
+            </div>
+            <input type="hidden" id="mCidadeVal">
           </div>
+
+          <!-- Região: autocomplete com validação -->
           <div class="col-md-6">
-            <label class="form-label">Região de atendimento</label>
-            <input type="text" class="form-control" id="mRegiao" placeholder="Ex: Oeste Catarinense">
+            <label class="form-label d-flex align-items-center justify-content-between">
+              <span>Região de atendimento</span>
+              <button type="button" class="btn-gerenciar" onclick="abrirModalGerenciar('regiao')" title="Gerenciar regiões">
+                <i class="bi bi-plus-circle-fill"></i> Gerenciar
+              </button>
+            </label>
+            <div class="ac-wrapper" id="acWrap_mRegiao">
+              <input type="text" class="form-control ac-input" id="mRegiao"
+                     autocomplete="off" placeholder="Digite para filtrar..."
+                     oninput="acFiltrar('mRegiao','regiao')"
+                     onblur="acValidar('mRegiao','regiao')"
+                     onfocus="acFiltrar('mRegiao','regiao')">
+              <div class="ac-dropdown" id="acDrop_mRegiao"></div>
+            </div>
+            <input type="hidden" id="mRegiaoVal">
           </div>
           <div class="col-md-6">
             <label class="form-label">
               Telefone pessoal *
               <small class="text-muted fw-normal">(somente interno — nunca exibido ao público)</small>
             </label>
-            <input type="text" class="form-control" id="mTelPessoal" placeholder="(49) 99999-9999">
+            <input type="text" class="form-control telefone-mask" id="mTelPessoal"
+                   placeholder="(49) 99999-9999" maxlength="15">
           </div>
           <div class="col-md-6">
             <label class="form-label">
               Telefone comercial
               <small class="text-muted fw-normal">(visível ao público)</small>
             </label>
-            <input type="text" class="form-control" id="mTelComercial" placeholder="(49) 3300-0000">
+            <input type="text" class="form-control telefone-mask" id="mTelComercial"
+                   placeholder="(49) 3300-0000" maxlength="15">
           </div>
           <div class="col-md-12">
             <label class="form-label">Observações</label>
@@ -341,6 +395,8 @@
             <tbody id="tabelaUsuarios"></tbody>
           </table>
         </div>
+        <!-- Paginador de usuários — renderizado via JS -->
+        <div id="paginadorUsuarios"></div>
       </div>
     </div><!-- /tabUsuarios -->
 
@@ -439,31 +495,27 @@
       <!-- Cabeçalho com fundo azul escuro -->
       <div class="modal-login-header">
         <h5><i class="bi bi-shield-lock me-2"></i>Acesso Restrito</h5>
-        <p>Painel administrativo COLIH</p>
+        <p>Painel administrativo COLI</p>
       </div>
 
       <div class="modal-body p-4">
         <div class="mb-3">
           <label class="form-label">Usuário</label>
-          <input type="text" class="form-control" id="loginUser" placeholder="seu.usuario">
+          <input type="text" class="form-control" id="loginUser"
+                 placeholder="seu.usuario" autocomplete="username">
         </div>
         <div class="mb-3">
           <label class="form-label">Senha</label>
-          <!-- Enter aciona o login diretamente -->
-          <input type="password" class="form-control" id="loginSenha" placeholder="••••••••"
+          <input type="password" class="form-control" id="loginSenha"
+                 placeholder="••••••••" autocomplete="current-password"
                  onkeydown="if(event.key==='Enter') doLogin()">
         </div>
-        <!-- Mensagem de erro — oculta por padrão, exibida via JS ao errar -->
         <div id="loginErro" class="text-danger small mb-2" style="display:none">
           <i class="bi bi-exclamation-circle me-1"></i>Usuário ou senha incorretos.
         </div>
         <button class="btn btn-teal w-100 py-2" onclick="doLogin()">
           <i class="bi bi-arrow-right-circle me-1"></i>Entrar
         </button>
-        <!-- Credenciais demo para facilitar testes -->
-        <p class="text-center text-muted small mt-3 mb-0">
-          Demo: <strong>admin</strong> / <strong>admin123</strong>
-        </p>
       </div>
 
     </div>
@@ -523,6 +575,69 @@
   </div>
 </div><!-- /modalSQL -->
 
+
+<!-- ════════════════════════════════════════════
+     MODAL GERENCIAR LISTAS (Área / Cidade / Região)
+     Um único modal reutilizável para os 3 cadastros.
+     Aberto via abrirModalGerenciar('area'|'cidade'|'regiao').
+════════════════════════════════════════════ -->
+<div class="modal fade" id="modalGerenciar" tabindex="-1" aria-label="Gerenciar lista">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content">
+
+      <!-- Cabeçalho colorido — título muda conforme o tipo -->
+      <div class="modal-header" style="background:var(--navy); border:none">
+        <h5 class="modal-title text-white" id="modalGerenciarTitulo">
+          <i class="bi bi-list-ul me-2"></i>Gerenciar
+        </h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-4">
+
+        <!-- Campo para adicionar novo item -->
+        <div class="d-flex gap-2 mb-3">
+          <input type="text" class="form-control" id="inputNovoItem"
+                 placeholder="Digite para adicionar novo..."
+                 onkeydown="if(event.key==='Enter') adicionarItemLista()">
+          <button class="btn btn-teal px-3 flex-shrink-0" onclick="adicionarItemLista()">
+            <i class="bi bi-plus-lg me-1"></i>Adicionar
+          </button>
+        </div>
+
+        <!-- Busca dentro da lista do modal -->
+        <div class="mb-3 position-relative">
+          <i class="bi bi-search position-absolute" style="left:0.75rem;top:50%;transform:translateY(-50%);color:#aaa;pointer-events:none"></i>
+          <input type="text" class="form-control ps-4" id="inputBuscaLista"
+                 placeholder="Buscar na lista..."
+                 oninput="filtrarListaGerenciar()">
+        </div>
+
+        <!-- Lista paginada dos itens cadastrados -->
+        <div id="listaItensGerenciar"></div>
+
+        <!-- Paginador do modal -->
+        <div id="paginadorGerenciar" class="mt-3"></div>
+
+      </div>
+
+      <div class="modal-footer border-0 pt-0">
+        <small class="text-muted me-auto">
+          <i class="bi bi-info-circle me-1"></i>
+          Itens em uso por médicos não podem ser excluídos.
+        </small>
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /modalGerenciar -->
+
+<!-- Datalists para autocomplete da BUSCA PÚBLICA -->
+<!-- Populados via JS com os valores do banco -->
+<datalist id="dlSearchNome"></datalist>
+<datalist id="dlSearchArea"></datalist>
+<datalist id="dlSearchCidade"></datalist>
 
 <!-- ════════════════════════════════════════════
      SCRIPTS
