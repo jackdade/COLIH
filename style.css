@@ -1,5 +1,5 @@
 /* ============================================================
-   style.css — Sistema COLI Médicos Parceiros JW
+   style.css — Sistema COLIH Médicos Parceiros JW
    Organização:
      1. Variáveis e Reset
      2. Tipografia
@@ -67,7 +67,7 @@ h1, h2, h3, h4, h5 {
    3. NAVBAR
    Barra de navegação fixa no topo
 ──────────────────────────────────────────── */
-.navbar-coli {
+.navbar-colih {
   background: var(--navy);
   padding: 0.75rem 2rem;
   position: sticky;
@@ -725,7 +725,7 @@ h1, h2, h3, h4, h5 {
   .btn-login-nav i { font-size: 1rem; }
 
   /* Reduz padding lateral da navbar para não apertar */
-  .navbar-coli { padding: 0.75rem 1rem; }
+  .navbar-colih { padding: 0.75rem 1rem; }
 }
 
 /* Em telas maiores, o label aparece com espaço à esquerda do ícone */

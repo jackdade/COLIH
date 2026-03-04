@@ -1,5 +1,5 @@
 /* ============================================================
-   app.js — Sistema COLI Médicos Parceiros JW
+   app.js — Sistema COLIH Médicos Parceiros JW
    Organização:
      1.  Banco de dados (localStorage simulando PostgreSQL)
      2.  Dados de demonstração iniciais
@@ -29,40 +29,40 @@
 ──────────────────────────────────────────── */
 const DB = {
   get usuarios() {
-    return JSON.parse(localStorage.getItem('coli_usuarios') || '[]');
+    return JSON.parse(localStorage.getItem('colih_usuarios') || '[]');
   },
   set usuarios(v) {
-    localStorage.setItem('coli_usuarios', JSON.stringify(v));
+    localStorage.setItem('colih_usuarios', JSON.stringify(v));
   },
 
   get medicos() {
-    return JSON.parse(localStorage.getItem('coli_medicos') || '[]');
+    return JSON.parse(localStorage.getItem('colih_medicos') || '[]');
   },
   set medicos(v) {
-    localStorage.setItem('coli_medicos', JSON.stringify(v));
+    localStorage.setItem('colih_medicos', JSON.stringify(v));
   },
 
   // ── Listas controladas: área, cidade e região ──
   // Garantem padronização nos cadastros de médicos.
   get areas() {
-    return JSON.parse(localStorage.getItem('coli_areas') || '[]');
+    return JSON.parse(localStorage.getItem('colih_areas') || '[]');
   },
   set areas(v) {
-    localStorage.setItem('coli_areas', JSON.stringify(v));
+    localStorage.setItem('colih_areas', JSON.stringify(v));
   },
 
   get cidades() {
-    return JSON.parse(localStorage.getItem('coli_cidades') || '[]');
+    return JSON.parse(localStorage.getItem('colih_cidades') || '[]');
   },
   set cidades(v) {
-    localStorage.setItem('coli_cidades', JSON.stringify(v));
+    localStorage.setItem('colih_cidades', JSON.stringify(v));
   },
 
   get regioes() {
-    return JSON.parse(localStorage.getItem('coli_regioes') || '[]');
+    return JSON.parse(localStorage.getItem('colih_regioes') || '[]');
   },
   set regioes(v) {
-    localStorage.setItem('coli_regioes', JSON.stringify(v));
+    localStorage.setItem('colih_regioes', JSON.stringify(v));
   },
 };
 
@@ -1415,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Schema SQL completo para implantação em PostgreSQL
 const SQL_SCHEMA = `-- ======================================
--- SCHEMA PostgreSQL — Sistema COLI
+-- SCHEMA PostgreSQL — Sistema COLIH
 -- Versão: 1.0
 -- ======================================
 
