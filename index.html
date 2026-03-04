@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>COLIH — Médicos Parceiros</title>
+
+  <!-- ── Dependências externas (CDN) ── -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- ── Estilos do sistema ── -->
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+
+<!-- ════════════════════════════════════════════
+     NAVBAR — Barra de navegação fixa no topo
+     Contém: logo, botões de login/logout/admin
+════════════════════════════════════════════ -->
+<nav class="navbar-colih d-flex align-items-center justify-content-between">
+  <div>
+    <!-- Logo e tagline -->
+    <div class="navbar-brand-text">COLIH <span>Médicos</span></div>
+    <div class="navbar-tagline">Rede de Parceiros JW</div>
+  </div>
+
+  <div class="d-flex gap-2 align-items-center">
+    <!-- Botão visível para visitantes não logados -->
+    <!-- Em mobile: só ícone | Em desktop: ícone + texto -->
+    <button class="btn-login-nav" id="btnNavLogin" onclick="openLogin()" title="Área Restrita">
+      <i class="bi bi-person-lock"></i>
+      <span class="btn-nav-label">Área Restrita</span>
+    </button>
+
+    <!-- Botões visíveis apenas quando logado (controlados por updateNavbar()) -->
+    <button class="btn-login-nav" id="btnNavLogout"
+            style="display:none; background:rgba(255,255,255,0.1)"
+            onclick="logout()" title="Sair">
+      <i class="bi bi-box-arrow-right"></i>
+      <span class="btn-nav-label">Sair</span>
+    </button>
+
+    <button class="btn-login-nav ms-1" id="btnNavAdmin"
+            style="display:none; background:var(--gold)"
+            onclick="showAdmin()" title="Painel Admin">
+      <i class="bi bi-grid-3x3-gap"></i>
+      <span class="btn-nav-label">Admin</span>
+    </button>
+
+    <button class="btn-login-nav ms-1" id="btnNavPublic"
+            style="display:none; background:rgba(255,255,255,0.1)"
+            onclick="showPublic()" title="Voltar ao Site">
+      <i class="bi bi-house"></i>
+      <span class="btn-nav-label">Site</span>
+    </button>
+  </div>
+</nav>
+
+
+<!-- ════════════════════════════════════════════
+     ÁREA PÚBLICA
+     Visível para qualquer visitante (sem login).
+     Contém: hero, busca de médicos, listagem com paginação, rodapé.
+════════════════════════════════════════════ -->
+<div id="publicArea" class="page active">
+
+  <!-- ── Hero: banner de apresentação do sistema ── -->
+  <div class="hero">
+    <div class="container position-relative">
+      <!-- Pílula dourada acima do título -->
+      <div class="hero-badge">
+        <i class="bi bi-shield-check me-1"></i>Rede Confiável JW
+      </div>
+
+      <h1 class="hero-title">
+        Encontre Médicos<br><span>Parceiros COLIH</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Profissionais de saúde que conhecem e respeitam as necessidades
+        das Testemunhas de Jeová. Atendimento com consciência e respeito.
+      </p>
+    </div>
+  </div><!-- /hero -->
+
+
+  <!-- ── Seção de busca e resultados ── -->
+  <div class="search-section">
+    <div class="container">
+
+      <!-- Card com os campos de filtro -->
+      <div class="search-card">
+        <div class="row g-3 align-items-end">
+
+          <!-- Filtro por nome do médico -->
+          <div class="col-md-4">
+            <label class="form-label">Nome do médico</label>
+            <input type="text" class="form-control" id="searchNome"
+                   placeholder="Ex: Dr. João Silva...">
+          </div>
+
+          <!-- Filtro por área de atuação (populado dinamicamente via JS) -->
+          <div class="col-md-3">
+            <label class="form-label">Área de atuação</label>
+            <select class="form-select" id="searchArea">
+              <option value="">Todas as áreas</option>
+            </select>
+          </div>
+
+          <!-- Filtro por cidade ou região -->
+          <div class="col-md-3">
+            <label class="form-label">Cidade / Região</label>
+            <input type="text" class="form-control" id="searchCidade"
+                   placeholder="Ex: Chapecó...">
+          </div>
+
+          <!-- Botão de buscar -->
+          <div class="col-md-2">
+            <button class="btn-search w-100" onclick="buscarMedicos()">
+              <i class="bi bi-search me-1"></i>Buscar
+            </button>
+          </div>
+
+        </div>
+      </div><!-- /search-card -->
+
+      <!-- Linha decorativa separadora -->
+      <div class="section-divider"></div>
+
+      <!-- Área onde os cards de médicos são renderizados via JS -->
+      <div id="resultadosBusca"></div>
+
+      <!-- Controles do paginador — renderizados via JS após busca -->
+      <div id="paginadorWrapper"></div>
+
+    </div>
+  </div><!-- /search-section -->
+
+
+  <!-- ── Rodapé da área pública ── -->
+  <div class="footer-pub mt-5">
+    <i class="bi bi-heart-fill text-danger me-1"></i>
+    Sistema COLIH — Médicos Parceiros &nbsp;|&nbsp; Desenvolvido para a comunidade JW
+  </div>
+
+</div><!-- /publicArea -->
+
+
+<!-- ════════════════════════════════════════════
+     PAINEL ADMINISTRATIVO
+     Visível somente após login.
+     Layout: sidebar esquerda + conteúdo direito.
+════════════════════════════════════════════ -->
+<div id="adminPanel" class="page">
+
+  <!-- ── Sidebar: menu de navegação lateral ── -->
+  <div class="admin-sidebar">
+
+    <!-- Dados do usuário logado -->
+    <div class="sidebar-user">
+      <div class="sidebar-user-name" id="sidebarUserName">—</div>
+      <div class="sidebar-user-role" id="sidebarUserRole">—</div>
+    </div>
+
+    <!-- Itens do menu lateral -->
+    <div class="sidebar-item active" id="tab-dashboard" onclick="showTab('dashboard')">
+      <i class="bi bi-grid-1x2"></i> Dashboard
+    </div>
+    <div class="sidebar-item" id="tab-medicos" onclick="showTab('medicos')">
+      <i class="bi bi-person-heart"></i> Médicos
+    </div>
+    <div class="sidebar-item" id="tab-cadMedico" onclick="showTab('cadMedico')">
+      <i class="bi bi-person-plus"></i> Cadastrar Médico
+    </div>
+    <!-- Abas de usuários: só aparecem para sub-líder+ (controlado por JS) -->
+    <div class="sidebar-item" id="tab-usuarios" onclick="showTab('usuarios')" style="display:none">
+      <i class="bi bi-people"></i> Usuários
+    </div>
+    <div class="sidebar-item" id="tab-cadUsuario" onclick="showTab('cadUsuario')" style="display:none">
+      <i class="bi bi-person-badge"></i> Cadastrar Usuário
+    </div>
+
+  </div><!-- /admin-sidebar -->
+
+
+  <!-- ── Conteúdo principal do admin ── -->
+  <div class="admin-main">
+
+
+    <!-- ── ABA: Dashboard ── -->
+    <div id="tabDashboard">
+      <h4 class="mb-4">Bem-vindo ao Painel COLIH</h4>
+
+      <!-- Boxes de estatísticas -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+          <div class="stat-box">
+            <div class="stat-number" id="statMedicos">0</div>
+            <div class="stat-label"><i class="bi bi-person-heart me-1"></i>Médicos cadastrados</div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="stat-box gold">
+            <div class="stat-number" id="statUsuarios">0</div>
+            <div class="stat-label"><i class="bi bi-people me-1"></i>Usuários do sistema</div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="stat-box navy">
+            <div class="stat-number" id="statAreas">0</div>
+            <div class="stat-label"><i class="bi bi-hospital me-1"></i>Áreas de atuação</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela dos 5 médicos mais recentes -->
+      <div class="admin-card">
+        <h5>Últimos Médicos Cadastrados</h5>
+        <div id="dashMedicos"></div>
+      </div>
+    </div><!-- /tabDashboard -->
+
+
+    <!-- ── ABA: Listagem de médicos ── -->
+    <div id="tabMedicos" style="display:none">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Médicos Cadastrados</h4>
+        <button class="btn btn-teal btn-sm" onclick="showTab('cadMedico')">
+          <i class="bi bi-plus-lg me-1"></i>Novo Médico
+        </button>
+      </div>
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="table table-admin">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Área / Subárea</th>
+                <th>Cidade</th>
+                <th>Região</th>
+                <th>Tel. Pessoal</th>
+                <th>Tel. Comercial</th>
+                <th>Cadastrado por</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <!-- Preenchido via renderTabelaMedicos() em app.js -->
+            <tbody id="tabelaMedicos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tabMedicos -->
+
+
+    <!-- ── ABA: Formulário de cadastro/edição de médico ── -->
+    <div id="tabCadMedico" style="display:none">
+      <h4 id="titleCadMedico" class="mb-4">Cadastrar Médico</h4>
+
+      <div class="admin-card">
+        <!-- Campo oculto: guarda o ID do médico em edição (vazio = novo cadastro) -->
+        <input type="hidden" id="medicoEditId"/>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Nome completo *</label>
+            <input type="text" class="form-control" id="mNome" placeholder="Dr. Nome Sobrenome">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Área de atuação *</label>
+            <input type="text" class="form-control" id="mArea" placeholder="Ex: Cardiologia">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Subárea</label>
+            <input type="text" class="form-control" id="mSubarea" placeholder="Ex: Eletrofisiologia">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Cidade de atendimento *</label>
+            <input type="text" class="form-control" id="mCidade" placeholder="Ex: Chapecó - SC">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Região de atendimento</label>
+            <input type="text" class="form-control" id="mRegiao" placeholder="Ex: Oeste Catarinense">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">
+              Telefone pessoal *
+              <small class="text-muted fw-normal">(somente interno — nunca exibido ao público)</small>
+            </label>
+            <input type="text" class="form-control" id="mTelPessoal" placeholder="(49) 99999-9999">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">
+              Telefone comercial
+              <small class="text-muted fw-normal">(visível ao público)</small>
+            </label>
+            <input type="text" class="form-control" id="mTelComercial" placeholder="(49) 3300-0000">
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Observações</label>
+            <textarea class="form-control" id="mObs" rows="2"
+                      placeholder="Notas adicionais sobre o médico..."></textarea>
+          </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <button class="btn btn-teal px-4" onclick="salvarMedico()">
+            <i class="bi bi-check-lg me-1"></i>Salvar
+          </button>
+          <button class="btn btn-outline-secondary px-4" onclick="cancelarEdicaoMedico()">
+            Cancelar
+          </button>
+        </div>
+      </div><!-- /admin-card -->
+    </div><!-- /tabCadMedico -->
+
+
+    <!-- ── ABA: Listagem de usuários ── -->
+    <div id="tabUsuarios" style="display:none">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Usuários do Sistema</h4>
+        <button class="btn btn-teal btn-sm" onclick="showTab('cadUsuario')">
+          <i class="bi bi-plus-lg me-1"></i>Novo Usuário
+        </button>
+      </div>
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="table table-admin">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Nome</th>
+                <th>Tipo / Nível</th>
+                <th>Cadastrado por</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <!-- Preenchido via renderTabelaUsuarios() em app.js -->
+            <tbody id="tabelaUsuarios"></tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tabUsuarios -->
+
+
+    <!-- ── ABA: Formulário de cadastro/edição de usuário ── -->
+    <div id="tabCadUsuario" style="display:none">
+      <h4 id="titleCadUsuario" class="mb-4">Cadastrar Usuário</h4>
+
+      <div class="admin-card">
+        <!-- Campo oculto: guarda o ID do usuário em edição (vazio = novo) -->
+        <input type="hidden" id="usuarioEditId"/>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Nome completo *</label>
+            <input type="text" class="form-control" id="uNome" placeholder="Nome do usuário">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nome de usuário (login) *</label>
+            <input type="text" class="form-control" id="uUser" placeholder="usuario.login">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Senha *</label>
+            <input type="password" class="form-control" id="uSenha" placeholder="••••••••">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nível de acesso *</label>
+            <select class="form-select" id="uTipo">
+              <option value="usuario">Usuário</option>
+              <option value="sublider">Sub-líder</option>
+              <option value="lider">Líder</option>
+              <option value="supremo">Supremo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <button class="btn btn-teal px-4" onclick="salvarUsuario()">
+            <i class="bi bi-check-lg me-1"></i>Salvar
+          </button>
+          <button class="btn btn-outline-secondary px-4" onclick="cancelarEdicaoUsuario()">
+            Cancelar
+          </button>
+        </div>
+      </div><!-- /admin-card -->
+
+      <!-- Tabela de referência de permissões por nível -->
+      <div class="admin-card mt-3">
+        <h5 style="font-size:1rem">Permissões por Nível</h5>
+        <table class="table table-admin table-sm mt-2">
+          <thead>
+            <tr>
+              <th>Nível</th>
+              <th>Cadastrar Médico</th>
+              <th>Editar Médico</th>
+              <th>Excluir Médico</th>
+              <th>Gerenciar Usuários</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge-role badge-supremo">Supremo</span></td>
+              <td>✅</td><td>✅ Todos</td><td>✅ Todos</td><td>✅ Todos os níveis</td>
+            </tr>
+            <tr>
+              <td><span class="badge-role badge-lider">Líder</span></td>
+              <td>✅</td><td>✅ Todos</td><td>✅ Todos</td><td>✅ Sub-líder e Usuário</td>
+            </tr>
+            <tr>
+              <td><span class="badge-role badge-sublider">Sub-líder</span></td>
+              <td>✅</td><td>✅ Próprios</td><td>❌</td><td>✅ Somente Usuário</td>
+            </tr>
+            <tr>
+              <td><span class="badge-role badge-usuario">Usuário</span></td>
+              <td>✅</td><td>✅ Próprios</td><td>❌</td><td>❌</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /tabCadUsuario -->
+
+  </div><!-- /admin-main -->
+
+</div><!-- /adminPanel -->
+
+
+<!-- ════════════════════════════════════════════
+     MODAL DE LOGIN
+     Formulário de autenticação com usuário e senha
+════════════════════════════════════════════ -->
+<div class="modal fade" id="modalLogin" tabindex="-1" aria-label="Modal de login">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+
+      <!-- Cabeçalho com fundo azul escuro -->
+      <div class="modal-login-header">
+        <h5><i class="bi bi-shield-lock me-2"></i>Acesso Restrito</h5>
+        <p>Painel administrativo COLIH</p>
+      </div>
+
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label">Usuário</label>
+          <input type="text" class="form-control" id="loginUser" placeholder="seu.usuario">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Senha</label>
+          <!-- Enter aciona o login diretamente -->
+          <input type="password" class="form-control" id="loginSenha" placeholder="••••••••"
+                 onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <!-- Mensagem de erro — oculta por padrão, exibida via JS ao errar -->
+        <div id="loginErro" class="text-danger small mb-2" style="display:none">
+          <i class="bi bi-exclamation-circle me-1"></i>Usuário ou senha incorretos.
+        </div>
+        <button class="btn btn-teal w-100 py-2" onclick="doLogin()">
+          <i class="bi bi-arrow-right-circle me-1"></i>Entrar
+        </button>
+        <!-- Credenciais demo para facilitar testes -->
+        <p class="text-center text-muted small mt-3 mb-0">
+          Demo: <strong>admin</strong> / <strong>admin123</strong>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /modalLogin -->
+
+
+<!-- ════════════════════════════════════════════
+     MODAL DE CONFIRMAÇÃO DE EXCLUSÃO
+     Overlay escuro com caixa centralizada.
+     Aparece antes de excluir médico ou usuário.
+════════════════════════════════════════════ -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+    <!-- Título e mensagem preenchidos dinamicamente via JS -->
+    <h5 id="confirmTitle">Confirmar exclusão</h5>
+    <p id="confirmMsg" class="text-muted small mb-4"></p>
+    <div class="d-flex gap-2 justify-content-center">
+      <button class="btn btn-outline-secondary px-4" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger px-4" id="confirmOkBtn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     CONTAINER DE TOASTS (notificações)
+     Posicionado no canto superior direito via CSS.
+     Os toasts são inseridos e removidos dinamicamente pelo JS.
+════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+
+<!-- ════════════════════════════════════════════
+     MODAL SQL SCHEMA
+     Exibe o SQL de criação do banco PostgreSQL.
+     Visível somente para usuários logados.
+════════════════════════════════════════════ -->
+<div class="modal fade" id="modalSQL" tabindex="-1" aria-label="Modal SQL Schema">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header" style="background:var(--navy)">
+        <h5 class="modal-title text-white">
+          <i class="bi bi-database me-2"></i>Schema PostgreSQL
+        </h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-0">
+        <!-- O SQL é injetado via JS no elemento abaixo -->
+        <pre class="sql-pre"><code id="sqlCode"></code></pre>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /modalSQL -->
+
+
+<!-- ════════════════════════════════════════════
+     SCRIPTS
+     Bootstrap deve vir antes do app.js para que
+     os componentes (Modal) estejam disponíveis.
+════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

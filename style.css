@@ -1,0 +1,741 @@
+/* ============================================================
+   style.css — Sistema COLIH Médicos Parceiros JW
+   Organização:
+     1. Variáveis e Reset
+     2. Tipografia
+     3. Navbar
+     4. Hero (banner principal)
+     5. Seção de Busca (área pública)
+     6. Cards de Médicos (área pública)
+     7. Paginador (área pública)
+     8. Painel Admin — Layout
+     9. Painel Admin — Sidebar
+    10. Painel Admin — Cards e Estatísticas
+    11. Painel Admin — Formulários
+    12. Botões
+    13. Tabelas
+    14. Badges de nível de usuário
+    15. Modal de Login
+    16. Notificações Toast
+    17. Modal de Confirmação
+    18. Estado vazio (sem resultados)
+    19. Modal SQL Schema
+    20. Utilitários e responsividade
+============================================================ */
+
+
+/* ────────────────────────────────────────────
+   1. VARIÁVEIS GLOBAIS E RESET BÁSICO
+   Define a paleta de cores e fontes do sistema
+──────────────────────────────────────────── */
+:root {
+  --navy:       #0f2140;   /* Azul escuro principal */
+  --navy-mid:   #1a3560;   /* Azul médio para gradientes */
+  --teal:       #0e8c7a;   /* Verde-azul primário (botões, destaques) */
+  --teal-light: #13b39e;   /* Verde-azul claro (hover) */
+  --gold:       #c9a84c;   /* Dourado (detalhes premium, badges) */
+  --cream:      #f8f5ef;   /* Fundo geral da página */
+  --white:      #ffffff;
+  --gray-soft:  #eef1f6;   /* Fundo do painel admin */
+  --text-dark:  #1a1a2e;   /* Texto principal */
+  --text-mid:   #4a5568;   /* Texto secundário */
+  --text-light: #8896ab;   /* Texto desabilitado / labels */
+  --danger:     #c0392b;   /* Vermelho para exclusão / erro */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+
+/* ────────────────────────────────────────────
+   2. TIPOGRAFIA
+   Headings usam Playfair Display (serifa elegante)
+   Corpo usa DM Sans (sans-serif limpa)
+──────────────────────────────────────────── */
+h1, h2, h3, h4, h5 {
+  font-family: 'Playfair Display', serif;
+}
+
+
+/* ────────────────────────────────────────────
+   3. NAVBAR
+   Barra de navegação fixa no topo
+──────────────────────────────────────────── */
+.navbar-colih {
+  background: var(--navy);
+  padding: 0.75rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Nome do sistema na navbar */
+.navbar-brand-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--white);
+  letter-spacing: 1px;
+}
+.navbar-brand-text span { color: var(--gold); }
+
+/* Tagline embaixo do nome */
+.navbar-tagline {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Botão da navbar (Área Restrita, Sair, Admin) */
+.btn-login-nav {
+  background: var(--teal);
+  color: white;
+  border: none;
+  padding: 0.45rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.btn-login-nav:hover { background: var(--teal-light); color: white; }
+
+
+/* ────────────────────────────────────────────
+   4. HERO — Banner principal da área pública
+   Gradiente azul com efeito de onda na base
+──────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, #1d4a6e 100%);
+  padding: 5rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glow verde no fundo do hero */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(14, 140, 122, 0.18) 0%, transparent 60%);
+}
+
+/* Onda curva na base do hero (transição para o fundo da página) */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: var(--cream);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+
+.hero-title {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  color: white;
+  line-height: 1.2;
+}
+.hero-title span { color: var(--gold); }
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.05rem;
+  max-width: 540px;
+  line-height: 1.7;
+}
+
+/* Pequena pílula dourada acima do título */
+.hero-badge {
+  display: inline-block;
+  background: rgba(201, 168, 76, 0.2);
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  color: var(--gold);
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0.3rem 1rem;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+}
+
+
+/* ────────────────────────────────────────────
+   5. SEÇÃO DE BUSCA — Área pública
+   Card branco flutuante com campos de filtro
+──────────────────────────────────────────── */
+.search-section { padding: 3rem 0 2rem; }
+
+.search-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(15, 33, 64, 0.1);
+  padding: 2rem 2.5rem;
+}
+
+/* Inputs e selects dentro do card de busca */
+.search-card .form-control,
+.search-card .form-select {
+  border: 1.5px solid #dde3ef;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.92rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-card .form-control:focus,
+.search-card .form-select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(14, 140, 122, 0.12);
+}
+
+/* Botão de buscar */
+.btn-search {
+  background: var(--teal);
+  color: white;
+  border: none;
+  padding: 0.65rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-search:hover {
+  background: var(--teal-light);
+  color: white;
+  transform: translateY(-1px);
+}
+
+
+/* ────────────────────────────────────────────
+   6. CARDS DE MÉDICOS — Área pública
+   Grid de cards exibidos nos resultados de busca
+──────────────────────────────────────────── */
+.medico-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 3px 16px rgba(15, 33, 64, 0.08);
+  padding: 1.5rem;
+  height: 100%;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 4px solid var(--teal);
+}
+.medico-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(15, 33, 64, 0.14);
+}
+
+/* Avatar circular com iniciais do médico */
+.medico-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--navy-mid));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.medico-nome {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  color: var(--navy);
+  margin: 0;
+}
+
+/* Label da especialidade */
+.medico-area {
+  font-size: 0.78rem;
+  color: var(--teal);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Tags de cidade, subárea, região */
+.medico-tag {
+  display: inline-block;
+  background: var(--gray-soft);
+  color: var(--text-mid);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  margin: 0.15rem;
+}
+
+.medico-phone { color: var(--text-mid); font-size: 0.85rem; }
+.medico-phone i { color: var(--teal); }
+
+
+/* ────────────────────────────────────────────
+   7. PAGINADOR — Área pública
+   Navegação entre páginas de resultados de busca
+──────────────────────────────────────────── */
+
+/* Container do paginador */
+.pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  padding-bottom: 1rem;
+}
+
+/* Cada botão de página */
+.page-btn {
+  min-width: 40px;
+  height: 40px;
+  border: 1.5px solid #dde3ef;
+  background: white;
+  color: var(--text-mid);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.6rem;
+}
+.page-btn:hover:not(:disabled) {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: rgba(14, 140, 122, 0.06);
+}
+
+/* Página ativa — destaque teal */
+.page-btn.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(14, 140, 122, 0.35);
+}
+
+/* Botões anterior / próximo desabilitados */
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Texto de info "Mostrando X de Y" */
+.pagination-info {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  margin-top: 0.75rem;
+}
+
+/* Linha divisória decorativa */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #dde3ef, transparent);
+  margin: 2rem 0;
+}
+
+
+/* ────────────────────────────────────────────
+   8. PAINEL ADMIN — Layout geral
+   Flex row: sidebar esquerda + conteúdo direito
+──────────────────────────────────────────── */
+
+/* O painel completo fica oculto até login */
+#adminPanel { display: none; }
+
+/* Quando ativo (usuário logado), vira flex row */
+#adminPanel.active { display: flex; }
+
+/* Área de conteúdo principal do admin */
+.admin-main {
+  flex: 1;
+  padding: 2rem;
+  background: var(--gray-soft);
+  min-height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+
+/* ────────────────────────────────────────────
+   9. PAINEL ADMIN — Sidebar (menu lateral)
+──────────────────────────────────────────── */
+.admin-sidebar {
+  background: var(--navy);
+  min-height: calc(100vh - 60px);
+  padding: 1.5rem 0;
+  width: 240px;
+  flex-shrink: 0;
+}
+
+/* Informações do usuário logado no topo da sidebar */
+.sidebar-user {
+  padding: 1rem 1.5rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+}
+.sidebar-user-name { color: white; font-weight: 600; font-size: 0.9rem; }
+.sidebar-user-role { font-size: 0.72rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Cada item de menu da sidebar */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+.sidebar-item:hover,
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.07);
+  color: white;
+  border-left-color: var(--teal); /* destaque verde na esquerda */
+}
+.sidebar-item i {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+
+/* ────────────────────────────────────────────
+   10. PAINEL ADMIN — Cards e Estatísticas
+──────────────────────────────────────────── */
+
+/* Card padrão do admin (listagens, formulários) */
+.admin-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(15, 33, 64, 0.07);
+  padding: 1.5rem;
+}
+.admin-card h5 {
+  font-family: 'Playfair Display', serif;
+  color: var(--navy);
+  margin-bottom: 1.2rem;
+}
+
+/* Boxes de estatísticas no dashboard */
+.stat-box {
+  background: white;
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 10px rgba(15, 33, 64, 0.07);
+  border-top: 3px solid var(--teal); /* borda colorida no topo */
+}
+.stat-box.gold  { border-top-color: var(--gold); }
+.stat-box.navy  { border-top-color: var(--navy); }
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 0.3rem;
+}
+
+
+/* ────────────────────────────────────────────
+   11. PAINEL ADMIN — Formulários
+──────────────────────────────────────────── */
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.3rem;
+}
+
+.form-control,
+.form-select {
+  border: 1.5px solid #dde3ef;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(14, 140, 122, 0.12);
+}
+
+
+/* ────────────────────────────────────────────
+   12. BOTÕES
+   Variantes de cor para diferentes ações
+──────────────────────────────────────────── */
+
+/* Verde-azul — ação principal (salvar, buscar, novo) */
+.btn-teal { background: var(--teal); color: white; border: none; border-radius: 8px; font-weight: 600; }
+.btn-teal:hover { background: var(--teal-light); color: white; }
+
+/* Azul escuro — ação secundária importante */
+.btn-navy { background: var(--navy); color: white; border: none; border-radius: 8px; font-weight: 600; }
+.btn-navy:hover { background: var(--navy-mid); color: white; }
+
+/* Dourado — destaque / SQL */
+.btn-gold { background: var(--gold); color: white; border: none; border-radius: 8px; font-weight: 600; }
+.btn-gold:hover { background: #b8954a; color: white; }
+
+/* Vermelho suave — excluir (fica vermelho sólido no hover) */
+.btn-danger-soft {
+  background: rgba(192, 57, 43, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+.btn-danger-soft:hover { background: var(--danger); color: white; }
+
+/* Verde suave — editar (fica verde sólido no hover) */
+.btn-edit-soft {
+  background: rgba(14, 140, 122, 0.1);
+  color: var(--teal);
+  border: 1px solid rgba(14, 140, 122, 0.2);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+.btn-edit-soft:hover { background: var(--teal); color: white; }
+
+
+/* ────────────────────────────────────────────
+   13. TABELAS — Listagem de médicos e usuários
+──────────────────────────────────────────── */
+.table-admin { font-size: 0.87rem; }
+
+/* Cabeçalho com letras maiúsculas e espaçamento */
+.table-admin th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-light);
+  border-bottom: 2px solid #eef1f6;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+}
+.table-admin td {
+  padding: 0.8rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f3f8;
+}
+
+/* Linha fica levemente azulada ao passar o mouse */
+.table-admin tr:hover td { background: #fafbff; }
+
+
+/* ────────────────────────────────────────────
+   14. BADGES DE NÍVEL DE USUÁRIO
+   Pílulas coloridas: Supremo, Líder, Sub-líder, Usuário
+──────────────────────────────────────────── */
+.badge-role {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.badge-supremo  { background: rgba(201, 168, 76,  0.15); color: #a07c1a; }  /* dourado */
+.badge-lider    { background: rgba(15,  33,  64,  0.12); color: var(--navy-mid); }  /* azul */
+.badge-sublider { background: rgba(14, 140, 122,  0.12); color: var(--teal); }  /* verde */
+.badge-usuario  { background: #eef1f6; color: var(--text-mid); }  /* cinza */
+
+
+/* ────────────────────────────────────────────
+   15. MODAL DE LOGIN
+──────────────────────────────────────────── */
+.modal-content {
+  border-radius: 16px;
+  border: none;
+  overflow: hidden;
+}
+
+/* Cabeçalho azul escuro do modal */
+.modal-login-header {
+  background: var(--navy);
+  padding: 2rem 2rem 1.5rem;
+  border: none;
+}
+.modal-login-header h5 {
+  color: white;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+}
+.modal-login-header p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+
+/* ────────────────────────────────────────────
+   16. NOTIFICAÇÕES TOAST
+   Aparecem no canto superior direito
+──────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast-custom {
+  background: white;
+  border-radius: 10px;
+  padding: 0.9rem 1.2rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid var(--teal);    /* verde = sucesso */
+  min-width: 280px;
+  animation: slideIn 0.3s ease;
+}
+.toast-custom.error   { border-left-color: var(--danger); }  /* vermelho = erro */
+.toast-custom.warning { border-left-color: var(--gold); }    /* dourado = aviso */
+
+/* Animação de entrada deslizando da direita */
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+
+/* ────────────────────────────────────────────
+   17. MODAL DE CONFIRMAÇÃO (Excluir)
+   Overlay escuro com caixa centralizada
+──────────────────────────────────────────── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  display: none;             /* visível via JS quando necessário */
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-box {
+  background: white;
+  border-radius: 14px;
+  padding: 2rem;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.confirm-icon {
+  font-size: 2.5rem;
+  color: var(--danger);
+  margin-bottom: 1rem;
+}
+
+
+/* ────────────────────────────────────────────
+   18. ESTADO VAZIO (sem resultados)
+   Exibido quando lista / busca não retorna nada
+──────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-light);
+}
+.empty-state i {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+
+/* ────────────────────────────────────────────
+   19. MODAL SQL SCHEMA
+   Exibe o schema PostgreSQL com syntax highlight simples
+──────────────────────────────────────────── */
+.sql-pre {
+  background: #0f1923;
+  color: #a8d8a8;
+  padding: 1.5rem;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+
+/* ────────────────────────────────────────────
+   20. UTILITÁRIOS E RESPONSIVIDADE
+──────────────────────────────────────────── */
+
+/* Controle de visibilidade de páginas */
+.page         { display: none; }
+.page.active  { display: block; }
+
+/* Footer da área pública */
+.footer-pub {
+  background: var(--navy);
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 0.8rem;
+}
+
+/* ── Botões da navbar em mobile: só ícone ── */
+@media (max-width: 576px) {
+  /* Esconde o texto, mantém só o ícone */
+  .btn-nav-label { display: none; }
+
+  /* Deixa o botão quadrado e centralizado */
+  .btn-login-nav {
+    padding: 0.45rem 0.6rem;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Ícone um toque maior para facilitar o toque */
+  .btn-login-nav i { font-size: 1rem; }
+
+  /* Reduz padding lateral da navbar para não apertar */
+  .navbar-colih { padding: 0.75rem 1rem; }
+}
+
+/* Em telas maiores, o label aparece com espaço à esquerda do ícone */
+@media (min-width: 577px) {
+  .btn-nav-label { margin-left: 0.3rem; }
+}
+
+/* Responsividade: esconde sidebar em mobile */
+@media (max-width: 768px) {
+  .admin-sidebar  { display: none; }
+  .hero           { padding: 3rem 1rem 3rem; }
+  .search-card    { padding: 1.2rem; }
+}
